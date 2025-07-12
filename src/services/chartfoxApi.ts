@@ -1,7 +1,6 @@
 
 import { GroupedChartsResponse, ApiError } from '@/types/chartfox';
-
-const BASE_URL = 'https://api.chartfox.org/v2';
+import { CHARTFOX_API_KEY, CHARTFOX_BASE_URL } from '@/config/api';
 
 class ChartFoxApiError extends Error {
   constructor(message: string, public status?: number) {
@@ -10,16 +9,20 @@ class ChartFoxApiError extends Error {
   }
 }
 
-export const getAirportCharts = async (airportIdent: string, apiKey: string): Promise<GroupedChartsResponse> => {
+export const getAirportCharts = async (airportIdent: string): Promise<GroupedChartsResponse> => {
   try {
     console.log(`Recherche des cartes pour l'aéroport: ${airportIdent}`);
     
+    if (CHARTFOX_API_KEY === 'YOUR_API_KEY_HERE') {
+      throw new ChartFoxApiError('Clé API non configurée. Veuillez modifier le fichier src/config/api.ts');
+    }
+    
     const response = await fetch(
-      `${BASE_URL}/airports/${airportIdent.toUpperCase()}/charts/grouped`,
+      `${CHARTFOX_BASE_URL}/airports/${airportIdent.toUpperCase()}/charts/grouped`,
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${CHARTFOX_API_KEY}`,
           'Content-Type': 'application/json',
           'User-Agent': 'ChartFox-Airport-Charts-App/1.0'
         }
