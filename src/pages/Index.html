@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>ChartFox Browser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+  <div class="container mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">ChartFox Browser</h1>
+      <p class="text-gray-600">Consultez les cartes d'aéroport avec l'API ChartFox</p>
+    </div>
+
+    <!-- Alert -->
+    <div id="errorContainer" class="hidden mb-6 flex justify-center">
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative max-w-2xl flex items-start gap-2">
+        <i data-lucide="alert-circle" class="w-5 h-5 mt-1"></i>
+        <span id="errorMessage" class="text-sm"></span>
+      </div>
+    </div>
+
+    <!-- Recherche -->
+    <div id="searchContainer" class="flex justify-center">
+      <form id="airportForm" class="flex gap-2">
+        <input id="icaoInput" type="text" maxlength="4" required
+          class="border rounded px-4 py-2 focus:outline-none focus:ring"
+          placeholder="Code OACI (ex: LFPG)" />
+        <button type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+          Rechercher
+        </button>
+      </form>
+    </div>
+
+    <!-- Résultat -->
+    <div id="resultContainer" class="space-y-6 hidden">
+      <div class="flex justify-center">
+        <button id="backButton"
+          class="flex items-center gap-2 border rounded px-4 py-2 hover:bg-gray-100">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          Nouvelle recherche
+        </button>
+      </div>
+      <div id="chartDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-12 text-sm text-gray-500">
+      <p>
+        Données fournies par
+        <a href="https://chartfox.org" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+          ChartFox
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script type="module">
+    import { getAirportCharts } from './chartfoxApi.js';
+
+    const form = document.getElementById('airportForm');
+    const icaoInput = document.getElementById('icaoInput');
+    const searchContainer = document.getElementById('searchContainer');
+    const resultContainer = document.getElementById('resultContainer');
+    const chartDisplay = document.getElementById('chartDisplay');
+    const errorContainer = document.getElementById('errorContainer');
+    const errorMessage = document.getElementById('errorMessage');
+    const backButton = document.getElementById('backButton');
+
+    // Initialisation des icônes
+    lucide.createIcons();
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorContainer.classList.remove('hidden');
+    }
+
+    function hideError() {
+      errorMessage.textContent = '';
+      errorContainer.classList.add('hidden');
+    }
+
+    function showCharts(data) {
+      chartDisplay.innerHTML = '';
+
+      for (const category in data) {
+        const section = document.createElement('div');
+        section.classList.add('bg-white', 'shadow', 'rounded-lg', 'p-4');
+
+        const title = document.createElement('h3');
+        title.textContent = category;
+        title.className = 'text-lg font-semibold mb-2';
+        section.appendChild(title);
+
+        const list = document.createElement('ul');
+        list.classList.add('space-y-1');
+
+        data[category].forEach(chart => {
+          const item = document.createElement('li');
+          item.innerHTML = `<a href="${chart.url}" target="_blank" class="text-blue-600 hover:underline">${chart.name}</a>`;
+          list.appendChild(item);
+        });
+
+        section.appendChild(list);
+        chartDisplay.appendChild(section);
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const icao = icaoInput.value.trim().toUpperCase();
+      if (!icao) return;
+
+      hideError();
+      searchContainer.classList.add('hidden');
+
+      try {
+        const data = await getAirportCharts(icao);
+        showCharts(data);
+        resultContainer.classList.remove('hidden');
+      } catch (err) {
+        searchContainer.classList.remove('hidden');
+        showError(err.message || 'Erreur inconnue.');
+      }
+    });
+
+    backButton.addEventListener('click', () => {
+      resultContainer.classList.add('hidden');
+      searchContainer.classList.remove('hidden');
+      hideError();
+      icaoInput.value = '';
+    });
+  </script>
+</body>
+</html>
