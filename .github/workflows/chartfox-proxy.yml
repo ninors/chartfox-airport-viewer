@@ -1,23 +1,27 @@
-name: Proxy ChartFox
+name: Proxy ChartFox Charts
 
 on:
   workflow_dispatch:
-  repository_dispatch:
-    types: [chartfox-proxy]
+    inputs:
+      icao:
+        description: 'ICAO code'
+        required: true
+        default: 'LFPG'
 
 jobs:
-  proxy:
+  fetch-charts:
     runs-on: ubuntu-latest
     steps:
-      - name: Appel vers ChartFox API
+      - name: Appel API ChartFox
         run: |
-          curl -s -X GET "https://api.chartfox.org/v1/charts/${{ github.event.client_payload.icao }}" \
-          -H "Authorization: Bearer ${{ secrets.CHARTFOX_TOKEN }}" \
-          -H "Accept: application/json" \
-          > charts.json
+          mkdir output
+          curl -X GET "https://api.chartfox.org/v1/charts/${{ github.event.inputs.icao }}" \
+            -H "Authorization: Bearer ${{ secrets.CHARTFOX_TOKEN }}" \
+            -H "Accept: application/json" \
+            -o output/${{ github.event.inputs.icao }}.json
 
-      - name: Upload charts.json
+      - name: Upload charts
         uses: actions/upload-artifact@v4
         with:
-          name: chartfox-${{ github.event.client_payload.icao }}
-          path: charts.json
+          name: charts-${{ github.event.inputs.icao }}
+          path: output/${{ github.event.inputs.icao }}.json
