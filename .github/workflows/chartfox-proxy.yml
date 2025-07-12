@@ -1,0 +1,23 @@
+name: Proxy ChartFox
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [chartfox-proxy]
+
+jobs:
+  proxy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appel vers ChartFox API
+        run: |
+          curl -s -X GET "https://api.chartfox.org/v1/charts/${{ github.event.client_payload.icao }}" \
+          -H "Authorization: Bearer ${{ secrets.CHARTFOX_TOKEN }}" \
+          -H "Accept: application/json" \
+          > charts.json
+
+      - name: Upload charts.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: chartfox-${{ github.event.client_payload.icao }}
+          path: charts.json
